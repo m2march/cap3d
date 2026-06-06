@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>3D кепка</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #f3f1ec; }
+  /* Контейнер для 3D-кепки — підлаштуй розмір під свій сайт */
+  #cap { width: 100%; height: 100vh; cursor: grab; }
+  #cap:active { cursor: grabbing; }
+</style>
+
+<!-- Three.js підключається з CDN, нічого встановлювати не треба -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<div id="cap"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls }  from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { GLTFLoader }      from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader }     from 'three/addons/loaders/DRACOLoader.js';
+import { DecalGeometry }   from 'three/addons/geometries/DecalGeometry.js';
+import { mergeVertices }   from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* ======================================================================
+   НАЛАШТУВАННЯ — міняй тут
+   ====================================================================== */
+const CONFIG = {
+  capColor: 0x16613f,            // колір тканини кепки (тільки для вбудованої кепки)
+  modelUrl: 'assets/cap-real.glb', // шлях до GLB-моделі. null = вбудована процедурна кепка
+  modelRotationY: 3.30,          // оберт моделі навколо вертикалі (радіани), щоб козирок дивився вперед (-Z)
+  smoothShade: false,            // згладжувати грані (для низькополі; реалістичній моделі не треба)
+  modelColor: 0x141414,          // перефарбувати завантажену модель (null = лишити як є). 0x141414 = чорний
+
+  // 3 картинки. dir = з якого боку (вперед -Z, лівий -X, правий +X);
+  // height = висота на кепці 0..1; size = ШИРИНА на кепці (висота авто за пропорцією картинки).
+  logo:  { url: 'assets/logo.png',       dir: [-0.2, 0, -1], height: 0.54, size: 0.46 }, // спереду — напис (трохи вправо)
+  left:  { url: 'assets/side-left.png',  dir: [-1, 0, 0.7], height: 0.40, size: 0.22 }, // лівий — патч (нижче, ближче до потилиці)
+  right: { url: 'assets/side-right.png', dir: [1, 0, 0.7], height: 0.40, size: 0.40 }, // правий — табличка (нижче, ближче до потилиці)
+
+  autoRotate: true,              // саме обертається, поки користувач не чіпає мишкою
+};
+
+const container = document.getElementById('cap');
+
+/* ---------- Рендерер ---------- */
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+container.appendChild(renderer.domElement);
+
+/* ---------- Сцена / камера / світло ---------- */
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+camera.position.set(1.9, 0.8, -2.5);      // фронт-3/4 згори: видно логотип, козирок і правий бік
+
+// М'яке студійне освітлення з оточення (модель красиво виглядає без ручних ламп)
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const key = new THREE.DirectionalLight(0xffffff, 1.6);
+key.position.set(3, 5, 4);
+scene.add(key);
+scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+
+/* ---------- Керування мишкою ---------- */
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.target.set(0, 0.42, 0);
+controls.minDistance = 1.8;
+controls.maxDistance = 7;
+controls.maxPolarAngle = Math.PI * 0.95;
+controls.autoRotate = CONFIG.autoRotate;
+controls.autoRotateSpeed = 1.2;
+controls.addEventListener('start', () => controls.autoRotate = false); // зупиняємо авто-оберт, коли крутять рукою
+
+/* ======================================================================
+   Тканинні PBR-текстури (CC0, ambientCG Fabric077) — справжнє плетіння,
+   нормал-мапа + шорсткість. Спільні для всіх частин кепки.
+   ====================================================================== */
+const texLoader = new THREE.TextureLoader();
+function fabricTex(url, srgb, repeat) {
+  const t = texLoader.load(url);
+  t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(repeat, repeat);
+  t.anisotropy = 8;
+  return t;
+}
+const FAB = {
+  map:          fabricTex('assets/fabric_albedo.jpg', true, 4),
+  normalMap:    fabricTex('assets/fabric_normal.jpg', false, 4),
+  roughnessMap: fabricTex('assets/fabric_rough.jpg', false, 4),
+};
+function fabricMaterial(color, extra = {}) {
+  return new THREE.MeshStandardMaterial({
+    color, map: FAB.map, normalMap: FAB.normalMap, roughnessMap: FAB.roughnessMap,
+    normalScale: new THREE.Vector2(1.1, 1.1), roughness: 1.0, metalness: 0.0, ...extra,
+  });
+}
+
+/* ======================================================================
+   Вбудована процедурна кепка (працює, навіть якщо GLB-моделі ще немає).
+   Передня панель дивиться в -Z.
+   ====================================================================== */
+function makeProceduralCap(color) {
+  const group = new THREE.Group();
+  const fabric = fabricMaterial(color);
+
+  // Купол
+  const crownGeo = new THREE.SphereGeometry(1, 96, 64, 0, Math.PI * 2, 0, Math.PI * 0.5);
+  crownGeo.scale(1.0, 0.92, 1.06);            // трохи приплюснутий, трохи довший спереду-ззаду
+  const crown = new THREE.Mesh(crownGeo, fabric);
+  group.add(crown);
+
+  // Козирок — язичок, що стирчить ЛИШЕ вперед (-Z) і плавно загинається донизу
+  const wSeg = 48, fSeg = 16, halfW = 1.05, reach = 1.0;
+  const pos = [], idx = [];
+  for (let i = 0; i <= fSeg; i++) {
+    const t = i / fSeg;                       // 0 біля голови → 1 на кінчику
+    for (let j = 0; j <= wSeg; j++) {
+      const s = (j / wSeg) * 2 - 1;           // -1..1 по ширині
+      const round = 1 - 0.45 * s * s;         // спереду округлений (краї коротші)
+      const x = s * halfW * (1 - 0.32 * t);   // трохи звужується до кінчика
+      const z = -(0.85 + reach * t * round);  // уперед = -Z, з-під передка купола
+      const y = 0.05 - 0.42 * t * t;          // плавно опускається донизу
+      pos.push(x, y, z);
+    }
+  }
+  for (let i = 0; i < fSeg; i++)
+    for (let j = 0; j < wSeg; j++) {
+      const a = i * (wSeg + 1) + j, b = a + wSeg + 1;
+      idx.push(a, b, a + 1, a + 1, b, b + 1);
+    }
+  const visorGeo = new THREE.BufferGeometry();
+  visorGeo.setIndex(idx);
+  visorGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  visorGeo.computeVertexNormals();
+  const visor = new THREE.Mesh(visorGeo, fabricMaterial(color, { side: THREE.DoubleSide }));
+  group.add(visor);
+
+  // Ґудзик на маківці
+  const button = new THREE.Mesh(
+    new THREE.SphereGeometry(0.06, 24, 24),
+    fabricMaterial(color)
+  );
+  button.position.set(0, 0.92, 0);
+  group.add(button);
+
+  group.userData.decalTarget = crown;   // саме на купол накладаємо картинки
+  return group;
+}
+
+/* ======================================================================
+   Накладання картинок (decals) на поверхню кепки — лягають по кривій
+   ====================================================================== */
+const raycaster = new THREE.Raycaster();
+const decalMatBase = {
+  transparent: true, depthTest: true, depthWrite: false,
+  polygonOffset: true, polygonOffsetFactor: -4, roughness: 0.65,
+};
+
+// Текстура з файлу, а якщо файл не знайдено — згенерований плейсхолдер (ніколи не падає)
+function loadTexture(url, label) {
+  return new Promise((resolve) => {
+    new THREE.TextureLoader().load(
+      url,
+      (tex) => { tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8; resolve(tex); },
+      undefined,
+      () => resolve(makePlaceholder(label))
+    );
+  });
+}
+function makePlaceholder(label) {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = '#ffffff'; x.fillRect(0, 0, 256, 256);
+  x.strokeStyle = '#16613f'; x.lineWidth = 12; x.strokeRect(8, 8, 240, 240);
+  x.fillStyle = '#16613f'; x.font = 'bold 48px sans-serif';
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(label, 128, 128);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; return tex;
+}
+
+function placeDecal(targetMesh, box, cfg, texture) {
+  // напрямок боку (горизонтальний) + потрібна висота на кепці
+  const horiz = new THREE.Vector3(cfg.dir[0], 0, cfg.dir[2]).normalize();
+  const anchor = new THREE.Vector3(
+    (box.min.x + box.max.x) / 2,
+    box.min.y + (box.max.y - box.min.y) * cfg.height,
+    (box.min.z + box.max.z) / 2,
+  );
+  // промінь ззовні всередину — знаходимо точку на поверхні та її нормаль
+  raycaster.set(anchor.clone().add(horiz.clone().multiplyScalar(5)), horiz.clone().negate());
+  const hit = raycaster.intersectObject(targetMesh, true)[0];
+  if (!hit) { console.warn('DECAL MISS', cfg.dir); return; }
+
+  const n = hit.face.normal.clone().transformDirection(targetMesh.matrixWorld).normalize();
+  const dummy = new THREE.Object3D();
+  dummy.position.copy(hit.point);
+  dummy.lookAt(hit.point.clone().add(n));   // дивимось назовні вздовж нормалі
+
+  // зберігаємо пропорції картинки: size = ширина, висота = ширина / (W/H)
+  const im = texture.image;
+  const iw = (im && (im.naturalWidth || im.width)) || 1;
+  const ih = (im && (im.naturalHeight || im.height)) || 1;
+  const w = cfg.size, h = cfg.size * (ih / iw);
+  const geo = new DecalGeometry(targetMesh, hit.point, dummy.rotation, new THREE.Vector3(w, h, 0.6));
+  const mat = new THREE.MeshStandardMaterial({ ...decalMatBase, map: texture });
+  // DecalGeometry віддає вершини у СВІТОВИХ координатах → додаємо в scene, не в меш
+  scene.add(new THREE.Mesh(geo, mat));
+}
+
+/* ======================================================================
+   Складання сцени
+   ====================================================================== */
+// GLTF-завантажувач із підтримкою Draco-стиснення (модель стиснута ~13x)
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+const gltfLoader = new GLTFLoader();
+gltfLoader.setDRACOLoader(dracoLoader);
+
+async function build() {
+  let capGroup, target;
+
+  if (CONFIG.modelUrl) {
+    const gltf = await gltfLoader.loadAsync(CONFIG.modelUrl);
+    capGroup = gltf.scene;
+    capGroup.rotation.y = CONFIG.modelRotationY;     // орієнтуємо козирок уперед
+    // знаходимо найбільший меш — на нього кладемо decals (зазвичай це купол)
+    let max = -Infinity;
+    capGroup.traverse((o) => {
+      if (o.isMesh) {
+        if (CONFIG.smoothShade) { o.geometry = mergeVertices(o.geometry); o.geometry.computeVertexNormals(); }
+        if (CONFIG.modelColor != null) {          // перефарбувати модель (напр. у чорний)
+          o.material = o.material.clone();
+          o.material.color.set(CONFIG.modelColor);
+          o.material.roughness = 0.82;
+          o.material.metalness = 0.0;
+        }
+        const v = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()).length();
+        if (v > max) { max = v; target = o; }
+      }
+    });
+  } else {
+    capGroup = makeProceduralCap(CONFIG.capColor);
+    target = capGroup.userData.decalTarget;
+  }
+
+  scene.add(capGroup);
+  fitToView(capGroup);                 // центруємо й масштабуємо під камеру
+  capGroup.updateMatrixWorld(true);    // важливо: матриці готові ДО накладання decals
+
+  const box = new THREE.Box3().setFromObject(target);
+  const [logo, left, right] = await Promise.all([
+    loadTexture(CONFIG.logo.url, 'LOGO'),
+    loadTexture(CONFIG.left.url, 'LEFT'),
+    loadTexture(CONFIG.right.url, 'RIGHT'),
+  ]);
+  placeDecal(target, box, CONFIG.logo,  logo);
+  placeDecal(target, box, CONFIG.left,  left);
+  placeDecal(target, box, CONFIG.right, right);
+}
+
+// Підганяє модель: центрує по горизонталі, ставить «на підлогу» і масштабує до ~1.6 одиниці
+function fitToView(obj) {
+  const box = new THREE.Box3().setFromObject(obj);
+  const size = box.getSize(new THREE.Vector3());
+  const scale = 1.6 / Math.max(size.x, size.y, size.z);
+  obj.scale.setScalar(scale);
+  obj.updateMatrixWorld(true);
+  const box2 = new THREE.Box3().setFromObject(obj);
+  const c = box2.getCenter(new THREE.Vector3());
+  obj.position.sub(new THREE.Vector3(c.x, box2.min.y, c.z));
+}
+
+build();
+
+/* ---------- Адаптивний розмір під контейнер ---------- */
+function resize() {
+  const w = container.clientWidth, h = container.clientHeight || 1;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(container);
+resize();
+
+/* ---------- Цикл рендеру ---------- */
+renderer.setAnimationLoop(() => {
+  controls.update();
+  renderer.render(scene, camera);
+});
+
+window.capViewer = { THREE, scene, camera, controls };  // debug-хендл (не заважає)
+</script>
+</body>
+</html>
