@@ -1,24 +1,25 @@
-МОДЕЛЬ
-======
-cap-real.glb — реалістична бейсболка (jomalon, Sketchfab), стиснена Draco (229 КБ, 93k полігонів).
-Завантаження в браузері потребує Draco-декодера (вже підключений у index.html з CDN).
+MODEL
+=====
+cap-real.glb — realistic baseball cap (jomalon, Sketchfab), Draco-compressed (~224 KB, 93k polygons).
+Loading it in the browser needs a Draco decoder (already wired into index.html via CDN).
 
-ЯК ЗАМІНИТИ КАРТИНКИ
+REPLACING THE IMAGES
 ====================
-Поклади свої 3 файли з ТАКИМИ Ж іменами (замінивши плейсхолдери):
-  logo.png        — логотип спереду. ПРОЗОРИЙ PNG, квадратний, 512–1024 px.
-  side-left.png   — ліва бічна картинка (квадратна, 512 px).
-  side-right.png  — права бічна картинка (квадратна, 512 px).
-Онови сторінку — і все.
+Drop your 3 files here with the SAME names (replacing the placeholders):
+  logo.png        — front logo. Transparent PNG, square, 512-1024 px.
+  side-left.png   — left side image (square, 512 px).
+  side-right.png  — right side image (square, 512 px).
+Refresh the page — done.
 
-ТОНКЕ НАЛАШТУВАННЯ (index.html, блок CONFIG)
-============================================
-  dir    — бік: [0,0,-1] перед, [-1,0,0] лівий, [1,0,0] правий
-  height — висота на кепці 0..1
-  size   — розмір картинки
-  modelRotationY — оберт моделі (якщо козирок не вперед)
+FINE-TUNING (index.html, CONFIG block)
+======================================
+  dir    — side: [0,0,-1] front, [-1,0,0] left, [1,0,0] right (add +Z to push toward the back)
+  height — position on the cap 0..1
+  size   — width on the cap (height auto from aspect ratio)
+  modelRotationY — model rotation (if the visor doesn't face front)
+  modelColor     — cap color (e.g. 0x141414 = black)
 
-ЛІЦЕНЗІЯ / АТРИБУЦІЯ
-===================
-Модель «Baseball Cap» by jomalon (Sketchfab), CC-BY — для публічного сайту
-додай у футер: «Baseball Cap» by jomalon (Sketchfab), CC BY 4.0.
+LICENSE / ATTRIBUTION
+=====================
+Model "Baseball Cap" by jomalon (Sketchfab), CC BY 4.0 — for a public site
+add to the footer: "Baseball Cap" by jomalon (Sketchfab), CC BY 4.0.

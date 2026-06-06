@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>3D кепка</title>
+<title>3D Cap</title>
 <style>
   html, body { margin: 0; height: 100%; background: #f3f1ec; }
-  /* Контейнер для 3D-кепки — підлаштуй розмір під свій сайт */
+  /* Container for the 3D cap — adjust the size to fit your site */
   #cap { width: 100%; height: 100vh; cursor: grab; }
   #cap:active { cursor: grabbing; }
 </style>
 
-<!-- Three.js підключається з CDN, нічого встановлювати не треба -->
+<!-- Three.js is loaded from a CDN, nothing to install -->
 <script type="importmap">
 {
   "imports": {
@@ -35,27 +35,27 @@ import { DecalGeometry }   from 'three/addons/geometries/DecalGeometry.js';
 import { mergeVertices }   from 'three/addons/utils/BufferGeometryUtils.js';
 
 /* ======================================================================
-   НАЛАШТУВАННЯ — міняй тут
+   CONFIG — edit here
    ====================================================================== */
 const CONFIG = {
-  capColor: 0x16613f,            // колір тканини кепки (тільки для вбудованої кепки)
-  modelUrl: 'assets/cap-real.glb', // шлях до GLB-моделі. null = вбудована процедурна кепка
-  modelRotationY: 3.30,          // оберт моделі навколо вертикалі (радіани), щоб козирок дивився вперед (-Z)
-  smoothShade: false,            // згладжувати грані (для низькополі; реалістичній моделі не треба)
-  modelColor: 0x141414,          // перефарбувати завантажену модель (null = лишити як є). 0x141414 = чорний
+  capColor: 0x16613f,            // fabric color (only used by the built-in procedural cap)
+  modelUrl: 'assets/cap-real.glb', // path to the GLB model. null = built-in procedural cap
+  modelRotationY: 3.30,          // model spin around the vertical axis (radians) so the visor faces front (-Z)
+  smoothShade: false,            // smooth faceted normals (for low-poly models; not needed for the realistic one)
+  modelColor: 0x141414,          // recolor the loaded model (null = keep original). 0x141414 = black
 
-  // 3 картинки. dir = з якого боку (вперед -Z, лівий -X, правий +X);
-  // height = висота на кепці 0..1; size = ШИРИНА на кепці (висота авто за пропорцією картинки).
-  logo:  { url: 'assets/logo.png',       dir: [-0.2, 0, -1], height: 0.54, size: 0.46 }, // спереду — напис (трохи вправо)
-  left:  { url: 'assets/side-left.png',  dir: [-1, 0, 0.7], height: 0.40, size: 0.22 }, // лівий — патч (нижче, ближче до потилиці)
-  right: { url: 'assets/side-right.png', dir: [1, 0, 0.7], height: 0.40, size: 0.40 }, // правий — табличка (нижче, ближче до потилиці)
+  // 3 images. dir = which side (front -Z, left -X, right +X);
+  // height = position on the cap 0..1; size = WIDTH on the cap (height is auto from the image aspect ratio).
+  logo:  { url: 'assets/logo.png',       dir: [-0.2, 0, -1], height: 0.54, size: 0.46 }, // front — wordmark (nudged right)
+  left:  { url: 'assets/side-left.png',  dir: [-1, 0, 0.7], height: 0.40, size: 0.22 }, // left — patch (lower, toward the back)
+  right: { url: 'assets/side-right.png', dir: [1, 0, 0.7], height: 0.40, size: 0.40 }, // right — plaque (lower, toward the back)
 
-  autoRotate: true,              // саме обертається, поки користувач не чіпає мишкою
+  autoRotate: true,              // idle auto-rotation until the user grabs it
 };
 
 const container = document.getElementById('cap');
 
-/* ---------- Рендерер ---------- */
+/* ---------- Renderer ---------- */
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -63,12 +63,12 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 container.appendChild(renderer.domElement);
 
-/* ---------- Сцена / камера / світло ---------- */
+/* ---------- Scene / camera / lights ---------- */
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-camera.position.set(1.9, 0.8, -2.5);      // фронт-3/4 згори: видно логотип, козирок і правий бік
+camera.position.set(1.9, 0.8, -2.5);      // front 3/4 from above: shows the logo, visor and right side
 
-// М'яке студійне освітлення з оточення (модель красиво виглядає без ручних ламп)
+// Soft studio lighting from an environment (the model looks good without manual lamps)
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
@@ -77,7 +77,7 @@ key.position.set(3, 5, 4);
 scene.add(key);
 scene.add(new THREE.AmbientLight(0xffffff, 0.3));
 
-/* ---------- Керування мишкою ---------- */
+/* ---------- Mouse controls ---------- */
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.target.set(0, 0.42, 0);
@@ -86,11 +86,11 @@ controls.maxDistance = 7;
 controls.maxPolarAngle = Math.PI * 0.95;
 controls.autoRotate = CONFIG.autoRotate;
 controls.autoRotateSpeed = 1.2;
-controls.addEventListener('start', () => controls.autoRotate = false); // зупиняємо авто-оберт, коли крутять рукою
+controls.addEventListener('start', () => controls.autoRotate = false); // stop auto-rotation once the user drags
 
 /* ======================================================================
-   Тканинні PBR-текстури (CC0, ambientCG Fabric077) — справжнє плетіння,
-   нормал-мапа + шорсткість. Спільні для всіх частин кепки.
+   Fabric PBR textures (CC0, ambientCG Fabric077) — real weave,
+   normal map + roughness. Shared by all parts of the procedural cap.
    ====================================================================== */
 const texLoader = new THREE.TextureLoader();
 function fabricTex(url, srgb, repeat) {
@@ -114,30 +114,30 @@ function fabricMaterial(color, extra = {}) {
 }
 
 /* ======================================================================
-   Вбудована процедурна кепка (працює, навіть якщо GLB-моделі ще немає).
-   Передня панель дивиться в -Z.
+   Built-in procedural cap (works even without a GLB model).
+   The front panel faces -Z.
    ====================================================================== */
 function makeProceduralCap(color) {
   const group = new THREE.Group();
   const fabric = fabricMaterial(color);
 
-  // Купол
+  // Crown
   const crownGeo = new THREE.SphereGeometry(1, 96, 64, 0, Math.PI * 2, 0, Math.PI * 0.5);
-  crownGeo.scale(1.0, 0.92, 1.06);            // трохи приплюснутий, трохи довший спереду-ззаду
+  crownGeo.scale(1.0, 0.92, 1.06);            // slightly flattened, slightly longer front-to-back
   const crown = new THREE.Mesh(crownGeo, fabric);
   group.add(crown);
 
-  // Козирок — язичок, що стирчить ЛИШЕ вперед (-Z) і плавно загинається донизу
+  // Visor — a tongue that sticks out ONLY forward (-Z) and curves gently downward
   const wSeg = 48, fSeg = 16, halfW = 1.05, reach = 1.0;
   const pos = [], idx = [];
   for (let i = 0; i <= fSeg; i++) {
-    const t = i / fSeg;                       // 0 біля голови → 1 на кінчику
+    const t = i / fSeg;                       // 0 near the head → 1 at the tip
     for (let j = 0; j <= wSeg; j++) {
-      const s = (j / wSeg) * 2 - 1;           // -1..1 по ширині
-      const round = 1 - 0.45 * s * s;         // спереду округлений (краї коротші)
-      const x = s * halfW * (1 - 0.32 * t);   // трохи звужується до кінчика
-      const z = -(0.85 + reach * t * round);  // уперед = -Z, з-під передка купола
-      const y = 0.05 - 0.42 * t * t;          // плавно опускається донизу
+      const s = (j / wSeg) * 2 - 1;           // -1..1 across the width
+      const round = 1 - 0.45 * s * s;         // rounded front (edges reach less far)
+      const x = s * halfW * (1 - 0.32 * t);   // tapers slightly toward the tip
+      const z = -(0.85 + reach * t * round);  // forward = -Z, from under the crown front
+      const y = 0.05 - 0.42 * t * t;          // curves smoothly downward
       pos.push(x, y, z);
     }
   }
@@ -153,7 +153,7 @@ function makeProceduralCap(color) {
   const visor = new THREE.Mesh(visorGeo, fabricMaterial(color, { side: THREE.DoubleSide }));
   group.add(visor);
 
-  // Ґудзик на маківці
+  // Button on top
   const button = new THREE.Mesh(
     new THREE.SphereGeometry(0.06, 24, 24),
     fabricMaterial(color)
@@ -161,12 +161,12 @@ function makeProceduralCap(color) {
   button.position.set(0, 0.92, 0);
   group.add(button);
 
-  group.userData.decalTarget = crown;   // саме на купол накладаємо картинки
+  group.userData.decalTarget = crown;   // decals are applied onto the crown
   return group;
 }
 
 /* ======================================================================
-   Накладання картинок (decals) на поверхню кепки — лягають по кривій
+   Image decals projected onto the cap surface — they wrap along the curve
    ====================================================================== */
 const raycaster = new THREE.Raycaster();
 const decalMatBase = {
@@ -174,7 +174,7 @@ const decalMatBase = {
   polygonOffset: true, polygonOffsetFactor: -4, roughness: 0.65,
 };
 
-// Текстура з файлу, а якщо файл не знайдено — згенерований плейсхолдер (ніколи не падає)
+// Load a texture from a file; if it is missing, fall back to a generated placeholder (never throws)
 function loadTexture(url, label) {
   return new Promise((resolve) => {
     new THREE.TextureLoader().load(
@@ -197,14 +197,14 @@ function makePlaceholder(label) {
 }
 
 function placeDecal(targetMesh, box, cfg, texture) {
-  // напрямок боку (горизонтальний) + потрібна висота на кепці
+  // side direction (horizontal) + desired height on the cap
   const horiz = new THREE.Vector3(cfg.dir[0], 0, cfg.dir[2]).normalize();
   const anchor = new THREE.Vector3(
     (box.min.x + box.max.x) / 2,
     box.min.y + (box.max.y - box.min.y) * cfg.height,
     (box.min.z + box.max.z) / 2,
   );
-  // промінь ззовні всередину — знаходимо точку на поверхні та її нормаль
+  // ray from outside inward — find the surface point and its normal
   raycaster.set(anchor.clone().add(horiz.clone().multiplyScalar(5)), horiz.clone().negate());
   const hit = raycaster.intersectObject(targetMesh, true)[0];
   if (!hit) { console.warn('DECAL MISS', cfg.dir); return; }
@@ -212,23 +212,23 @@ function placeDecal(targetMesh, box, cfg, texture) {
   const n = hit.face.normal.clone().transformDirection(targetMesh.matrixWorld).normalize();
   const dummy = new THREE.Object3D();
   dummy.position.copy(hit.point);
-  dummy.lookAt(hit.point.clone().add(n));   // дивимось назовні вздовж нормалі
+  dummy.lookAt(hit.point.clone().add(n));   // face outward along the normal
 
-  // зберігаємо пропорції картинки: size = ширина, висота = ширина / (W/H)
+  // keep the image aspect ratio: size = width, height = width / (W/H)
   const im = texture.image;
   const iw = (im && (im.naturalWidth || im.width)) || 1;
   const ih = (im && (im.naturalHeight || im.height)) || 1;
   const w = cfg.size, h = cfg.size * (ih / iw);
   const geo = new DecalGeometry(targetMesh, hit.point, dummy.rotation, new THREE.Vector3(w, h, 0.6));
   const mat = new THREE.MeshStandardMaterial({ ...decalMatBase, map: texture });
-  // DecalGeometry віддає вершини у СВІТОВИХ координатах → додаємо в scene, не в меш
+  // DecalGeometry returns vertices in WORLD space → add to the scene, not to the mesh
   scene.add(new THREE.Mesh(geo, mat));
 }
 
 /* ======================================================================
-   Складання сцени
+   Scene assembly
    ====================================================================== */
-// GLTF-завантажувач із підтримкою Draco-стиснення (модель стиснута ~13x)
+// GLTF loader with Draco support (the model is compressed ~13x)
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
 const gltfLoader = new GLTFLoader();
@@ -240,13 +240,13 @@ async function build() {
   if (CONFIG.modelUrl) {
     const gltf = await gltfLoader.loadAsync(CONFIG.modelUrl);
     capGroup = gltf.scene;
-    capGroup.rotation.y = CONFIG.modelRotationY;     // орієнтуємо козирок уперед
-    // знаходимо найбільший меш — на нього кладемо decals (зазвичай це купол)
+    capGroup.rotation.y = CONFIG.modelRotationY;     // orient the visor to the front
+    // pick the largest mesh — decals go onto it (usually the crown)
     let max = -Infinity;
     capGroup.traverse((o) => {
       if (o.isMesh) {
         if (CONFIG.smoothShade) { o.geometry = mergeVertices(o.geometry); o.geometry.computeVertexNormals(); }
-        if (CONFIG.modelColor != null) {          // перефарбувати модель (напр. у чорний)
+        if (CONFIG.modelColor != null) {          // recolor the model (e.g. to black)
           o.material = o.material.clone();
           o.material.color.set(CONFIG.modelColor);
           o.material.roughness = 0.82;
@@ -262,8 +262,8 @@ async function build() {
   }
 
   scene.add(capGroup);
-  fitToView(capGroup);                 // центруємо й масштабуємо під камеру
-  capGroup.updateMatrixWorld(true);    // важливо: матриці готові ДО накладання decals
+  fitToView(capGroup);                 // center and scale to fit the camera
+  capGroup.updateMatrixWorld(true);    // important: matrices ready BEFORE placing decals
 
   const box = new THREE.Box3().setFromObject(target);
   const [logo, left, right] = await Promise.all([
@@ -276,7 +276,7 @@ async function build() {
   placeDecal(target, box, CONFIG.right, right);
 }
 
-// Підганяє модель: центрує по горизонталі, ставить «на підлогу» і масштабує до ~1.6 одиниці
+// Fit the model: center it horizontally, sit it "on the floor" and scale to ~1.6 units
 function fitToView(obj) {
   const box = new THREE.Box3().setFromObject(obj);
   const size = box.getSize(new THREE.Vector3());
@@ -290,7 +290,7 @@ function fitToView(obj) {
 
 build();
 
-/* ---------- Адаптивний розмір під контейнер ---------- */
+/* ---------- Responsive sizing to the container ---------- */
 function resize() {
   const w = container.clientWidth, h = container.clientHeight || 1;
   renderer.setSize(w, h, false);
@@ -300,13 +300,13 @@ function resize() {
 new ResizeObserver(resize).observe(container);
 resize();
 
-/* ---------- Цикл рендеру ---------- */
+/* ---------- Render loop ---------- */
 renderer.setAnimationLoop(() => {
   controls.update();
   renderer.render(scene, camera);
 });
 
-window.capViewer = { THREE, scene, camera, controls };  // debug-хендл (не заважає)
+window.capViewer = { THREE, scene, camera, controls };  // debug handle (harmless)
 </script>
 </body>
 </html>

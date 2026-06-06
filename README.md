@@ -1,42 +1,42 @@
-# 3D-кепка 🧢 — інтерактивний переглядач
+# 3D Cap 🧢 — interactive viewer
 
-Реалістична 3D-модель бейсболки для вебсайту: обертання мишкою, логотип спереду та дві картинки по боках (накладаються як decal'и просто на поверхню). Самодостатній статичний HTML — без збірки, фреймворків і бекенду.
+A realistic 3D baseball cap for a website: rotate it with the mouse, with a logo on the front and two images on the sides (applied as decals straight onto the surface). Self-contained static HTML — no build step, no framework, no backend.
 
-🔗 **Демо:** https://denysosadchyi.github.io/cap3d/
+🔗 **Live demo:** https://denysosadchyi.github.io/cap3d/
 
-![Прев'ю](preview.png)
+![Preview](preview.png)
 
 ---
 
-## Можливості
-- Реалістична модель (6 панелей, шви, строчка, вигнутий козирок), стиснена **Draco** → лише **~224 КБ**
-- Обертання мишкою (OrbitControls) + плавний авто-оберт у спокої
-- Логотип спереду + 2 бічні картинки, що **лягають по кривій** поверхні (THREE.DecalGeometry)
-- Збереження пропорцій картинок, перефарбування кепки в будь-який колір
-- Адаптивний розмір під контейнер, студійне освітлення (IBL)
-- Вбудована процедурна кепка як запасний варіант (якщо немає GLB)
+## Features
+- Realistic model (6 panels, seams, stitching, curved visor), **Draco-compressed** → only **~224 KB**
+- Mouse rotation (OrbitControls) + smooth idle auto-rotation
+- Front logo + 2 side images that **wrap along the curved** surface (THREE.DecalGeometry)
+- Image aspect ratio preserved; recolor the cap to any color
+- Responsive sizing to its container, studio lighting (IBL)
+- Built-in procedural cap as a fallback (when no GLB is present)
 
-## Швидкий старт (локально)
-Файли треба віддавати через **HTTP** (не `file://` — модулі та GLB не завантажаться):
+## Quick start (local)
+Files must be served over **HTTP** (not `file://` — ES modules and the GLB won't load):
 ```bash
 cd cap3d
 python3 -m http.server 8000
-# відкрий http://localhost:8000/
+# open http://localhost:8000/
 ```
 
-## Інтеграція в сайт
+## Embedding in a site
 
-### Варіант A — iframe (найпростіший)
-Заливаєш папку на хостинг і вставляєш:
+### Option A — iframe (simplest)
+Upload the folder to your host and embed:
 ```html
 <iframe src="https://denysosadchyi.github.io/cap3d/"
-        title="3D кепка" loading="lazy"
+        title="3D cap" loading="lazy"
         style="width:100%; height:600px; border:0;"></iframe>
 ```
 
-### Варіант B — вбудувати напряму
-1. Скопіюй папку `assets/` у свій проєкт.
-2. У `<head>` сторінки додай importmap:
+### Option B — inline
+1. Copy the `assets/` folder into your project.
+2. Add the importmap to your `<head>`:
 ```html
 <script type="importmap">
 { "imports": {
@@ -45,70 +45,70 @@ python3 -m http.server 8000
 }}
 </script>
 ```
-3. У `<body>` додай контейнер і `<script type="module">…</script>` з `index.html`
-   (від рядка `import * as THREE` до кінця). Підлаштуй `#cap { width/height }` під свій блок.
+3. Add a container and the `<script type="module">…</script>` from `index.html`
+   (from `import * as THREE` to the end) into your `<body>`. Adjust `#cap { width/height }` to fit your block.
 
-## Структура проєкту
+## Project structure
 ```
 cap3d/
-├─ index.html                 # увесь код переглядача (Three.js, decal'и, керування)
-├─ preview.png                # прев'ю для README
+├─ index.html                 # the whole viewer (Three.js, decals, controls)
+├─ preview.png                # README preview
 └─ assets/
-   ├─ cap-real.glb            # 3D-модель кепки (Draco, ~224 КБ)
-   ├─ logo.png                # логотип спереду  (заміни своїм, прозорий PNG)
-   ├─ side-left.png           # ліва картинка
-   ├─ side-right.png          # права картинка
-   ├─ fabric_*.jpg            # тканинні текстури (тільки для процедурного запасного варіанта)
-   └─ README.txt              # коротка пам'ятка
+   ├─ cap-real.glb            # the cap model (Draco, ~224 KB)
+   ├─ logo.png                # front logo  (replace with yours, transparent PNG)
+   ├─ side-left.png           # left image
+   ├─ side-right.png          # right image
+   ├─ fabric_*.jpg            # fabric textures (only for the procedural fallback)
+   └─ README.txt              # short cheat sheet
 ```
 
-## Конфігурація
-Усе налаштування — у блоці `CONFIG` на початку `<script>` в `index.html`:
+## Configuration
+Everything is configured in the `CONFIG` block at the top of the `<script>` in `index.html`:
 
-| Параметр | Що робить |
+| Option | What it does |
 |---|---|
-| `modelUrl` | шлях до GLB; `null` = вбудована процедурна кепка |
-| `modelColor` | колір кепки, напр. `0x141414` (чорний); `null` = лишити як є |
-| `modelRotationY` | оберт моделі (радіани), щоб козирок дивився вперед (−Z) |
-| `autoRotate` | авто-обертання, поки не чіпають мишкою |
-| `logo` / `left` / `right` | картинки — поля нижче |
+| `modelUrl` | path to the GLB; `null` = built-in procedural cap |
+| `modelColor` | cap color, e.g. `0x141414` (black); `null` = keep original |
+| `modelRotationY` | model rotation (radians) so the visor faces front (−Z) |
+| `autoRotate` | idle auto-rotation until the user grabs it |
+| `logo` / `left` / `right` | the images — fields below |
 
-Для кожної картинки:
-| Поле | Значення |
+Per image:
+| Field | Meaning |
 |---|---|
-| `url` | шлях до файлу |
-| `dir` | з якого боку: `[0,0,-1]` перед, `[-1,0,0]` лівий, `[1,0,0]` правий. Додай `+Z`, щоб зсунути до потилиці (напр. `[-1,0,0.7]`) |
-| `height` | висота на кепці `0..1` (0 — низ, 1 — маківка) |
-| `size` | ШИРИНА на кепці (висота рахується авто за пропорцією картинки) |
+| `url` | path to the file |
+| `dir` | which side: `[0,0,-1]` front, `[-1,0,0]` left, `[1,0,0]` right. Add `+Z` to push it toward the back (e.g. `[-1,0,0.7]`) |
+| `height` | position on the cap `0..1` (0 = bottom, 1 = top) |
+| `size` | WIDTH on the cap (height is computed automatically from the image aspect ratio) |
 
-## Заміна картинок
-Поклади свої файли в `assets/` з тими ж іменами (`logo.png`, `side-left.png`, `side-right.png`).
-Рекомендації: прозорий PNG, квадрат або реальні пропорції, ≤ 1024 px. Онови сторінку.
+## Replacing the images
+Drop your files into `assets/` with the same names (`logo.png`, `side-left.png`, `side-right.png`).
+Recommended: transparent PNG, square or true aspect ratio, ≤ 1024 px. Refresh the page.
 
-## Заміна 3D-моделі
-1. Поклади свою GLB у `assets/` і вкажи в `CONFIG.modelUrl`.
-2. Якщо козирок не дивиться вперед — підбери `CONFIG.modelRotationY` (π/2≈1.57, π≈3.14).
-3. Стиснути важку модель (потрібен Node):
+## Replacing the 3D model
+1. Put your GLB in `assets/` and set `CONFIG.modelUrl`.
+2. If the visor doesn't face front, tune `CONFIG.modelRotationY` (π/2≈1.57, π≈3.14).
+3. Compress a heavy model (Node required):
 ```bash
 npx @gltf-transform/cli weld  in.glb  weld.glb
-npx @gltf-transform/cli draco weld.glb assets/cap-real.glb   # 2.98 МБ → ~230 КБ
+npx @gltf-transform/cli draco weld.glb assets/cap-real.glb   # 2.98 MB → ~230 KB
 ```
-   Draco-декодер уже підключено в `index.html` (з CDN gstatic).
+   The Draco decoder is already wired into `index.html` (from the gstatic CDN).
 
-## Технології
-- [Three.js](https://threejs.org) r160 (ESM з CDN, importmap)
+## Tech stack
+- [Three.js](https://threejs.org) r160 (ESM via CDN, importmap)
 - OrbitControls, GLTFLoader + **DRACOLoader**, **DecalGeometry**, RoomEnvironment (IBL)
-- Без npm-залежностей на проді — усе тягнеться з CDN і кешується
+- No npm dependencies in production — everything loads from a CDN and is cached
 
-## Продуктивність
-- Модель ~224 КБ (Draco), картинки ~243 КБ, код ~14 КБ
-- 93k полігонів — миттєвий рендер навіть на слабких пристроях
-- `pixelRatio` обмежено до 2; рендер через `setAnimationLoop`
+## Performance
+- Model ~224 KB (Draco), images ~243 KB, code ~14 KB
+- 93k triangles — instant rendering even on low-end devices
+- `pixelRatio` capped at 2; rendering via `setAnimationLoop`
 
-## Ліцензії / атрибуція
-- 3D-модель: **«Baseball Cap» by jomalon** (Sketchfab), **CC BY 4.0** — потрібна вказівка автора.
-- Тканинні текстури: **ambientCG** (Fabric077), **CC0**.
-- Картинки (логотип, патчі) — власність Extinction Rebellion Rebellion Club.
-- Код: Three.js (MIT).
+## Licenses / attribution
+- 3D model: **"Baseball Cap" by jomalon** (Sketchfab), **CC BY 4.0** — attribution required.
+- Fabric textures: **ambientCG** (Fabric077), **CC0**.
+- Images (logo, patches) — property of Extinction Rebellion Rebellion Club.
+- Code: Three.js (MIT).
 
-> Для публічного сайту додай у футер: *«Baseball Cap» by jomalon (Sketchfab), CC BY 4.0*.
+> For a public site, add to the footer: *"Baseball Cap" by jomalon (Sketchfab), CC BY 4.0*.
