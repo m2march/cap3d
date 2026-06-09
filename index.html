@@ -34,6 +34,213 @@ import { DRACOLoader }     from 'three/addons/loaders/DRACOLoader.js';
 import { DecalGeometry }   from 'three/addons/geometries/DecalGeometry.js';
 import { mergeVertices }   from 'three/addons/utils/BufferGeometryUtils.js';
 
+
+function drawPedestal(ctx, cx, baseY) {
+  const pw = 160, ph = 130;
+  ctx.fillStyle = '#253525';
+  ctx.fillRect(cx - pw / 2, baseY - ph * 0.18, pw, ph * 0.18);
+  ctx.fillStyle = '#1b2b1b';
+  ctx.fillRect(cx - pw * 0.28, baseY - ph * 0.88, pw * 0.56, ph * 0.72);
+  ctx.fillStyle = '#2d3d2d';
+  ctx.fillRect(cx - pw * 0.34, baseY - ph * 0.93, pw * 0.68, pw * 0.08);
+  ctx.strokeStyle = '#3a5a3a';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cx - pw * 0.22, baseY - ph * 0.82, pw * 0.44, pw * 0.36);
+}
+
+function drawHeart(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  const cx = w / 2, baseY = h * 0.8;
+  drawPedestal(ctx, cx, baseY);
+  ctx.save();
+  ctx.translate(cx, baseY - 140);
+  const s = 88;
+  ctx.fillStyle = '#c8483a';
+  ctx.shadowColor = '#ff7755';
+  ctx.shadowBlur = 18;
+  ctx.beginPath();
+  ctx.moveTo(0, s * 0.3);
+  ctx.bezierCurveTo(0, -s * 0.2, -s, -s * 0.2, -s, s * 0.3);
+  ctx.bezierCurveTo(-s, s * 0.9, 0, s * 1.4, 0, s * 1.6);
+  ctx.bezierCurveTo(0, s * 1.4, s, s * 0.9, s, s * 0.3);
+  ctx.bezierCurveTo(s, -s * 0.2, 0, -s * 0.2, 0, s * 0.3);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#fff0ee';
+  ctx.font = 'bold 52px "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('L+J', 0, s * 0.85);
+  ctx.restore();
+  ctx.fillStyle = '#fff0ee';
+  ctx.font = 'bold 28px "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('1. MEET THE ONE', cx, baseY + 32);
+}
+
+function drawPlane(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  const cx = w / 2, baseY = h * 0.8;
+  drawPedestal(ctx, cx, baseY);
+  ctx.save();
+  ctx.translate(cx, baseY - 155);
+  const ax = -140, ay = -28, aw = 90, ah = 58;
+  ctx.fillStyle = '#74ACDF'; ctx.fillRect(ax, ay, aw, ah / 3);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(ax, ay + ah / 3, aw, ah / 3);
+  ctx.fillStyle = '#74ACDF'; ctx.fillRect(ax, ay + 2 * ah / 3, aw, ah / 3);
+  ctx.fillStyle = '#F6B40E';
+  ctx.beginPath(); ctx.arc(ax + aw / 2, ay + ah / 2, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#F6B40E'; ctx.lineWidth = 2.5;
+  for (let a = 0; a < 8; a++) {
+    const ang = a * Math.PI / 4;
+    ctx.beginPath();
+    ctx.moveTo(ax + aw / 2 + Math.cos(ang) * 12, ay + ah / 2 + Math.sin(ang) * 12);
+    ctx.lineTo(ax + aw / 2 + Math.cos(ang) * 20, ay + ah / 2 + Math.sin(ang) * 20);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = '#4a7a4a'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(ax + aw, ay - 6); ctx.lineTo(ax + aw, ay + ah + 6); ctx.stroke();
+  ctx.fillStyle = '#8ecf8e';
+  ctx.shadowColor = '#4a9e4a';
+  ctx.shadowBlur = 14;
+  ctx.beginPath(); ctx.ellipse(0, 0, 90, 24, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(90, 0); ctx.lineTo(138, -8); ctx.lineTo(138, 8); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-70, -4); ctx.lineTo(-46, -56); ctx.lineTo(-22, -4); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(24, -68); ctx.lineTo(50, -68); ctx.lineTo(46, 0); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(24, 68); ctx.lineTo(50, 68); ctx.lineTo(46, 0); ctx.closePath(); ctx.fill();
+  ctx.shadowBlur = 0;
+  const ux = 140, uy = -28, uw = 90, uh = 58;
+  for (let i = 0; i < 7; i++) {
+    ctx.fillStyle = i % 2 === 0 ? '#B22234' : '#ffffff';
+    ctx.fillRect(ux, uy + i * (uh / 7), uw, uh / 7 + 0.5);
+  }
+  ctx.fillStyle = '#3C3B6E'; ctx.fillRect(ux, uy, uw * 0.42, uh * 0.54);
+  ctx.fillStyle = '#ffffff';
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) {
+    ctx.beginPath(); ctx.arc(ux + 4 + c * 9, uy + 4 + r * 8, 2, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.strokeStyle = '#4a7a4a'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(ux, uy - 6); ctx.lineTo(ux, uy + uh + 6); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = '#5aaf5a';
+  ctx.font = 'bold 28px "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('2. MOVE TO US', cx, baseY + 32);
+}
+
+function drawHouse(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  const cx = w / 2, baseY = h * 0.8;
+  drawPedestal(ctx, cx, baseY);
+  ctx.save();
+  ctx.translate(cx, baseY - 155);
+  ctx.fillStyle = '#8ecf8e';
+  ctx.shadowColor = '#4a9e4a';
+  ctx.shadowBlur = 14;
+  ctx.fillRect(-70, -16, 140, 120);
+  ctx.beginPath(); ctx.moveTo(-95, -16); ctx.lineTo(0, -110); ctx.lineTo(95, -16); ctx.closePath(); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#6abf6a';
+  ctx.fillRect(32, -106, 26, 58);
+  ctx.fillStyle = '#4a9a4a'; ctx.fillRect(28, -110, 34, 10);
+  ctx.fillStyle = '#0d1a0d';
+  ctx.beginPath(); ctx.roundRect(-20, 30, 40, 74, [8, 8, 0, 0]); ctx.fill();
+  ctx.fillStyle = '#e8c23a';
+  ctx.beginPath(); ctx.arc(12, 67, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillRect(-62, 2, 36, 32); ctx.fillRect(26, 2, 36, 32);
+  ctx.strokeStyle = '#0d1a0d'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(-44, 2); ctx.lineTo(-44, 34); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-62, 18); ctx.lineTo(-26, 18); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(44, 2); ctx.lineTo(44, 34); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(26, 18); ctx.lineTo(62, 18); ctx.stroke();
+  ctx.strokeStyle = '#3a5a3a'; ctx.lineWidth = 3; ctx.setLineDash([5, 7]);
+  ctx.beginPath(); ctx.moveTo(45, -106); ctx.bezierCurveTo(28, -126, 60, -146, 44, -168); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+  ctx.fillStyle = '#5aaf5a';
+  ctx.font = 'bold 28px "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('3. BUY THE HOUSE', cx, baseY + 32);
+}
+
+function drawBaby(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  const cx = w / 2, baseY = h * 0.8;
+  drawPedestal(ctx, cx, baseY);
+  ctx.save();
+  ctx.translate(cx, baseY - 160);
+  ctx.shadowColor = '#f5e07a'; ctx.shadowBlur = 18;
+  ctx.fillStyle = '#e8c23a';
+  ctx.beginPath(); ctx.ellipse(0, 72, 52, 64, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, -8, 58, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#1a1a0a';
+  ctx.beginPath(); ctx.arc(-18, -16, 9, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(18, -16, 9, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(-13, -21, 3.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(23, -21, 3.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#1a1a0a'; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.arc(0, 2, 22, 0.3, Math.PI - 0.3); ctx.stroke();
+  ctx.fillStyle = 'rgba(220,100,80,0.35)';
+  ctx.beginPath(); ctx.ellipse(-30, 4, 14, 9, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(30, 4, 14, 9, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#c8a020'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-16, -64); ctx.lineTo(-10, -88); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, -66); ctx.lineTo(0, -92); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(16, -64); ctx.lineTo(10, -88); ctx.stroke();
+  ctx.strokeStyle = '#d4af30'; ctx.lineWidth = 18; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-50, 44); ctx.lineTo(-96, 18); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(50, 44); ctx.lineTo(96, 18); ctx.stroke();
+  ctx.fillStyle = '#ff6655'; ctx.font = '40px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('♥', 82, -44);
+  ctx.fillStyle = 'rgba(255,102,85,0.5)'; ctx.font = '26px sans-serif';
+  ctx.fillText('♥', -80, -60);
+  ctx.restore();
+  ctx.fillStyle = '#f5e07a';
+  ctx.font = 'bold 28px "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('4. HAVE THE BABY', cx, baseY + 32);
+}
+
+function drawTextCard(ctx, w, h, topText = 'THIS IS THE', bottomText = 'FIRST STEP') {
+  ctx.clearRect(0, 0, w, h);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#89c989';
+  ctx.font = 'bold 120px "Courier New", monospace';
+  ctx.fillText(topText, w / 2, h * 0.42);
+  ctx.fillStyle = '#f5e07a';
+  ctx.font = 'bold 160px "Courier New", monospace';
+  ctx.shadowColor = '#f5e07a';
+  ctx.shadowBlur = 18;
+  ctx.fillText(bottomText, w / 2, h * 0.88);
+  ctx.shadowBlur = 0;
+}
+
+function makeTextCardTexture(topText, bottomText) {
+  const c = document.createElement('canvas');
+  c.width = 1024;
+  c.height = 512;
+  const ctx = c.getContext('2d');
+  drawTextCard(ctx, c.width, c.height, topText, bottomText);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  return tex;
+}
+
+function makeDrawTexture(drawFn, width = 512, height = 512) {
+  const c = document.createElement('canvas');
+  c.width = width;
+  c.height = height;
+  const ctx = c.getContext('2d');
+  drawFn(ctx, c.width, c.height);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  return tex;
+}
+
 /* ======================================================================
    CONFIG — edit here
    ====================================================================== */
@@ -266,14 +473,22 @@ async function build() {
   capGroup.updateMatrixWorld(true);    // important: matrices ready BEFORE placing decals
 
   const box = new THREE.Box3().setFromObject(target);
-  const [logo, left, right] = await Promise.all([
-    loadTexture(CONFIG.logo.url, 'LOGO'),
-    loadTexture(CONFIG.left.url, 'LEFT'),
-    loadTexture(CONFIG.right.url, 'RIGHT'),
-  ]);
+  const logo = makeTextCardTexture('THIS IS THE', 'FIRST STEP');
+  const leftHeart = makeDrawTexture(drawHeart);
+  const leftPlane = makeDrawTexture(drawPlane);
+  const rightBaby = makeDrawTexture(drawBaby);
+  const rightHouse = makeDrawTexture(drawHouse);
+
+  const leftHeartCfg = { ...CONFIG.left, dir: [1, 0, 0.5], height: 0.56, size: 0.40 };
+  const leftPlaneCfg = { ...CONFIG.left, dir: [1, 0, 0.0], height: 0.50, size: 0.30 };
+  const rightBabyCfg = { ...CONFIG.right, dir: [-1, 0, 0.0], height: 0.50, size: 0.30 };
+  const rightHouseCfg = { ...CONFIG.right, dir: [-1, 0, 0.5], height: 0.50, size: 0.30 };
+
   placeDecal(target, box, CONFIG.logo,  logo);
-  placeDecal(target, box, CONFIG.left,  left);
-  placeDecal(target, box, CONFIG.right, right);
+  placeDecal(target, box, leftHeartCfg, leftHeart);
+  placeDecal(target, box, leftPlaneCfg, leftPlane);
+  placeDecal(target, box, rightBabyCfg, rightBaby);
+  placeDecal(target, box, rightHouseCfg, rightHouse);
 }
 
 // Fit the model: center it horizontally, sit it "on the floor" and scale to ~1.6 units
