@@ -53,7 +53,7 @@ function drawHeart(ctx, w, h) {
   const cx = w / 2, baseY = h * 0.8;
   drawPedestal(ctx, cx, baseY);
   ctx.save();
-  ctx.translate(cx, baseY - 140);
+  ctx.translate(cx, baseY - 200);
   const s = 88;
   ctx.fillStyle = '#c8483a';
   ctx.shadowColor = '#ff7755';
@@ -83,7 +83,8 @@ function drawPlane(ctx, w, h) {
   drawPedestal(ctx, cx, baseY);
   ctx.save();
   ctx.translate(cx, baseY - 155);
-  const ax = -140, ay = -28, aw = 90, ah = 58;
+  // Bandera Arg
+  const ax = -180, ay = -28, aw = 90, ah = 58;
   ctx.fillStyle = '#74ACDF'; ctx.fillRect(ax, ay, aw, ah / 3);
   ctx.fillStyle = '#ffffff'; ctx.fillRect(ax, ay + ah / 3, aw, ah / 3);
   ctx.fillStyle = '#74ACDF'; ctx.fillRect(ax, ay + 2 * ah / 3, aw, ah / 3);
@@ -102,13 +103,12 @@ function drawPlane(ctx, w, h) {
   ctx.fillStyle = '#8ecf8e';
   ctx.shadowColor = '#4a9e4a';
   ctx.shadowBlur = 14;
+  ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(-6, -68); ctx.lineTo(16, -68); ctx.lineTo(46, 0); ctx.closePath(); ctx.fill();
   ctx.beginPath(); ctx.ellipse(0, 0, 90, 24, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(90, 0); ctx.lineTo(138, -8); ctx.lineTo(138, 8); ctx.closePath(); ctx.fill();
   ctx.beginPath(); ctx.moveTo(-70, -4); ctx.lineTo(-46, -56); ctx.lineTo(-22, -4); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(24, -68); ctx.lineTo(50, -68); ctx.lineTo(46, 0); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(24, 68); ctx.lineTo(50, 68); ctx.lineTo(46, 0); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(-6, 68); ctx.lineTo(16, 68); ctx.lineTo(46, 0); ctx.closePath(); ctx.fill();
   ctx.shadowBlur = 0;
-  const ux = 140, uy = -28, uw = 90, uh = 58;
+  const ux = 90, uy = -28, uw = 90, uh = 58;
   for (let i = 0; i < 7; i++) {
     ctx.fillStyle = i % 2 === 0 ? '#B22234' : '#ffffff';
     ctx.fillRect(ux, uy + i * (uh / 7), uw, uh / 7 + 0.5);
@@ -479,10 +479,10 @@ async function build() {
   const rightBaby = makeDrawTexture(drawBaby);
   const rightHouse = makeDrawTexture(drawHouse);
 
-  const leftHeartCfg = { ...CONFIG.left, dir: [1, 0, 0.5], height: 0.56, size: 0.40 };
-  const leftPlaneCfg = { ...CONFIG.left, dir: [1, 0, 0.0], height: 0.50, size: 0.30 };
-  const rightBabyCfg = { ...CONFIG.right, dir: [-1, 0, 0.0], height: 0.50, size: 0.30 };
-  const rightHouseCfg = { ...CONFIG.right, dir: [-1, 0, 0.5], height: 0.50, size: 0.30 };
+  const leftHeartCfg = { ...CONFIG.left, dir: [1, 0, 0.7], height: 0.56, size: 0.40 };
+  const leftPlaneCfg = { ...CONFIG.left, dir: [1, 0, 0.0], height: 0.56, size: 0.40 };
+  const rightBabyCfg = { ...CONFIG.right, dir: [-1, 0, 0.0], height: 0.56, size: 0.40 };
+  const rightHouseCfg = { ...CONFIG.right, dir: [-1, 0, 0.7], height: 0.56, size: 0.40 };
 
   placeDecal(target, box, CONFIG.logo,  logo);
   placeDecal(target, box, leftHeartCfg, leftHeart);
