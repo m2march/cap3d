@@ -26,10 +26,17 @@ export function drawImageCaptionCard(ctx, w, h, textBelow, textColor, image, tex
   ctx.drawImage(image, drawX, drawY, drawW, drawH);
 
   ctx.fillStyle = textColor;
-  ctx.font = `bold ${textSize}px "Courier New", monospace`;
+  ctx.font = `bold ${textSize}px "Arial ExtraBold", monospace`;
   ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(textBelow, w / 2, h - bottomPad / 2);
+  ctx.textBaseline = 'top';
+  const lines = String(textBelow).split('\n');
+  const lineHeight = textSize * 1.2;
+  const textAreaCenterY = h - bottomPad / 2;
+  const startY = textAreaCenterY - ((lines.length - 1) * lineHeight) / 2;
+
+  lines.forEach((line, index) => {
+    ctx.fillText(line, w / 2, startY + index * lineHeight);
+  });
 }
 
 export async function makeImageCaptionTexture(

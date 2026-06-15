@@ -33,7 +33,7 @@ import { GLTFLoader }      from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader }     from 'three/addons/loaders/DRACOLoader.js';
 import { DecalGeometry }   from 'three/addons/geometries/DecalGeometry.js';
 import { mergeVertices }   from 'three/addons/utils/BufferGeometryUtils.js';
-import { drawHeart, drawPlane, drawHouse, drawBaby } from './icon-drawers.js';
+import { makeImageCaptionTexture } from './icon-drawers.js';
 
 function drawTextCard(ctx, w, h, topText = 'THIS IS THE', bottomText = 'FIRST STEP') {
   ctx.clearRect(0, 0, w, h);
@@ -79,7 +79,7 @@ const CONFIG = {
   right: { url: 'assets/side-right.png', dir: [1, 0, 0.7], height: 0.40, size: 0.40 }, // right — plaque (lower, toward the back)
 
   autoRotate: true,              // idle auto-rotation until the user grabs it
-  iconTextSize: 48,              // caption font size used for trophy decals
+  iconTextSize: 48,              // caption font size used for icon decals
 };
 
 const container = document.getElementById('cap');
@@ -319,11 +319,42 @@ async function build() {
 
   const box = new THREE.Box3().setFromObject(target);
   const logo = makeTextCardTexture('THIS IS THE', 'FIRST STEP');
-  const textOpts = { textSize: CONFIG.iconTextSize };
-  const leftHeart = await drawHeart(THREE, textOpts);
-  const leftPlane = await drawPlane(THREE, textOpts);
-  const rightBaby = await drawBaby(THREE, textOpts);
-  const rightHouse = await drawHouse(THREE, textOpts);
+  const leftHeart = await makeImageCaptionTexture(
+    THREE,
+    'SOUL MATE',
+    '#ff0000',
+    'assets/heart.png',
+    512,
+    512,
+    CONFIG.iconTextSize,
+  );
+  const leftPlane = await makeImageCaptionTexture(
+    THREE,
+    'NEW HORIZONS',
+    '#78a2bf',
+    'assets/plane.png',
+    512,
+    512,
+    CONFIG.iconTextSize,
+  );
+  const rightBaby = await makeImageCaptionTexture(
+    THREE,
+    'CRAWL SPACE',
+    '#d79984',
+    'assets/baby.png',
+    512,
+    512,
+    CONFIG.iconTextSize,
+  );
+  const rightHouse = await makeImageCaptionTexture(
+    THREE,
+    'HOME STEADY',
+    '#a66843',
+    'assets/house.png',
+    512,
+    512,
+    CONFIG.iconTextSize,
+  );
 
   const leftHeartCfg = { ...CONFIG.left, dir: [1, 0, 0.3], height: 0.46, size: 0.20 };
   const leftPlaneCfg = { ...CONFIG.left, dir: [1, 0, -0.2], height: 0.46, size: 0.20 };
