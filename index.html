@@ -35,27 +35,29 @@ import { DecalGeometry }   from 'three/addons/geometries/DecalGeometry.js';
 import { mergeVertices }   from 'three/addons/utils/BufferGeometryUtils.js';
 import { makeImageCaptionTexture } from './icon-drawers.js';
 
-function drawTextCard(ctx, w, h, topText = 'THIS IS THE', bottomText = 'FIRST STEP') {
+function drawTextCard(ctx, w, h, 
+                      topText = 'THIS IS THE', bottomText = 'FIRST STEP', 
+                      topColor = '#89c989', bottomColor = '#f5e07a') {
   ctx.clearRect(0, 0, w, h);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#89c989';
+  ctx.fillStyle = topColor;
   ctx.font = 'bold 120px "Courier New", monospace';
   ctx.fillText(topText, w / 2, h * 0.42);
-  ctx.fillStyle = '#f5e07a';
+  ctx.fillStyle = bottomColor;
   ctx.font = 'bold 160px "Courier New", monospace';
-  ctx.shadowColor = '#f5e07a';
-  ctx.shadowBlur = 18;
+  //ctx.shadowColor = '#f5e07a';
+  //ctx.shadowBlur = 18;
   ctx.fillText(bottomText, w / 2, h * 0.88);
   ctx.shadowBlur = 0;
 }
 
-function makeTextCardTexture(topText, bottomText) {
+function makeTextCardTexture(topText, bottomText, topColor, bottomColor) {
   const c = document.createElement('canvas');
   c.width = 1024;
   c.height = 512;
   const ctx = c.getContext('2d');
-  drawTextCard(ctx, c.width, c.height, topText, bottomText);
+  drawTextCard(ctx, c.width, c.height, topText, bottomText, topColor, bottomColor);
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
@@ -72,15 +74,92 @@ const CONFIG = {
   smoothShade: false,            // smooth faceted normals (for low-poly models; not needed for the realistic one)
   modelColor: 0x141414,          // recolor the loaded model (null = keep original). 0x141414 = black
 
-  // 3 images. dir = which side (front -Z, left -X, right +X);
-  // height = position on the cap 0..1; size = WIDTH on the cap (height is auto from the image aspect ratio).
-  logo:  { url: 'assets/logo.png',       dir: [-0.2, 0, -1], height: 0.54, size: 0.46 }, // front — wordmark (nudged right)
-  left:  { url: 'assets/side-left.png',  dir: [-1, 0, 0.7], height: 0.40, size: 0.22 }, // left — patch (lower, toward the back)
-  right: { url: 'assets/side-right.png', dir: [1, 0, 0.7], height: 0.40, size: 0.40 }, // right — plaque (lower, toward the back)
-
   autoRotate: true,              // idle auto-rotation until the user grabs it
   iconTextSize: 48,              // caption font size used for icon decals
 };
+
+const CAPS_CONFIG = [
+  {
+    yOffset: 1.05,
+    logos: [
+      {
+        type: 'textCard',
+        topText: 'THIS IS THE',
+        bottomText: 'FIRST STEP',
+        placement: { dir: [-0.2, 0, -1], height: 0.54, size: 0.46 },
+      },
+      {
+        type: 'imageCaption',
+        textBelow: 'SOUL MATE',
+        textColor: '#ff0000',
+        imageUrl: 'assets/heart.png',
+        placement: { dir: [1, 0, 0.3], height: 0.46, size: 0.20 },
+      },
+      {
+        type: 'imageCaption',
+        textBelow: 'NEW HORIZONS',
+        textColor: '#78a2bf',
+        imageUrl: 'assets/plane.png',
+        placement: { dir: [1, 0, -0.2], height: 0.46, size: 0.20 },
+      },
+      {
+        type: 'imageCaption',
+        textBelow: 'CRAWL SPACE',
+        textColor: '#d79984',
+        imageUrl: 'assets/baby.png',
+        placement: { dir: [-1, 0, 0.15], height: 0.46, size: 0.20 },
+      },
+      {
+        type: 'imageCaption',
+        textBelow: 'HOME STEADY',
+        textColor: '#a66843',
+        imageUrl: 'assets/house.png',
+        placement: { dir: [-1, 0, 0.66], height: 0.46, size: 0.20 },
+      },
+    ],
+  },
+  {
+    yOffset: -1.05,
+    logos: [
+      {
+        type: 'textCard',
+        topText: 'THIS IS THE',
+        bottomText: 'FIRST STEP',
+        topColor: '#fffffe',
+        bottomColor: '#f86600',
+        placement: { dir: [-0.2, 0, -1], height: 0.54, size: 0.36 },
+      },
+      {
+        type: 'imageCaption',
+        textBelow: '',
+        textColor: '#ff0000',
+        imageUrl: 'assets/heart.png',
+        placement: { dir: [1, 0, 0.3], height: 0.36, size: 0.10 },
+      },
+      {
+        type: 'imageCaption',
+        textBelow: '',
+        textColor: '#78a2bf',
+        imageUrl: 'assets/plane.png',
+        placement: { dir: [1, 0, 0.1], height: 0.36, size: 0.10 },
+      },
+      {
+        type: 'imageCaption',
+        textBelow: '',
+        textColor: '#d79984',
+        imageUrl: 'assets/baby.png',
+        placement: { dir: [1, 0, -0.1], height: 0.36, size: 0.10 },
+      },
+      {
+        type: 'imageCaption',
+        textBelow: '',
+        textColor: '#a66843',
+        imageUrl: 'assets/house.png',
+        placement: { dir: [1, 0, -0.3], height: 0.36, size: 0.10 },
+      },
+    ],
+  },
+];
 
 const container = document.getElementById('cap');
 
@@ -285,87 +364,77 @@ const gltfLoader = new GLTFLoader();
 gltfLoader.setDRACOLoader(dracoLoader);
 
 async function build() {
-  let capGroup, target;
+  const capsRoot = new THREE.Group();
+  scene.add(capsRoot);
 
-  if (CONFIG.modelUrl) {
-    const gltf = await gltfLoader.loadAsync(CONFIG.modelUrl);
-    capGroup = gltf.scene;
-    capGroup.rotation.y = CONFIG.modelRotationY;     // orient the visor to the front
-    // pick the largest mesh — decals go onto it (usually the crown)
-    let max = -Infinity;
-    capGroup.traverse((o) => {
-      if (o.isMesh) {
-        if (CONFIG.smoothShade) { o.geometry = mergeVertices(o.geometry); o.geometry.computeVertexNormals(); }
-        if (CONFIG.modelColor != null) {          // recolor the model (e.g. to black)
-          o.material = o.material.clone();
-          o.material.color.set(CONFIG.modelColor);
-          o.material.roughness = 0.82;
-          o.material.metalness = 0.0;
+  const createLogoTexture = async (logoCfg) => {
+    if (logoCfg.type === 'textCard') {
+      return makeTextCardTexture(
+        logoCfg.topText, logoCfg.bottomText,
+        logoCfg.topColor, logoCfg.bottomColor,
+      );
+    }
+
+    if (logoCfg.type === 'imageCaption') {
+      return makeImageCaptionTexture(
+        THREE,
+        logoCfg.textBelow,
+        logoCfg.textColor,
+        logoCfg.imageUrl,
+        512,
+        512,
+        CONFIG.iconTextSize,
+      );
+    }
+
+    throw new Error(`Unknown logo type: ${logoCfg.type}`);
+  };
+
+  const buildCapFromConfig = async (capConfig) => {
+    let capGroup, target;
+
+    if (CONFIG.modelUrl) {
+      const gltf = await gltfLoader.loadAsync(CONFIG.modelUrl);
+      capGroup = gltf.scene;
+      capGroup.rotation.y = CONFIG.modelRotationY;     // orient the visor to the front
+      // pick the largest mesh — decals go onto it (usually the crown)
+      let max = -Infinity;
+      capGroup.traverse((o) => {
+        if (o.isMesh) {
+          if (CONFIG.smoothShade) { o.geometry = mergeVertices(o.geometry); o.geometry.computeVertexNormals(); }
+          if (CONFIG.modelColor != null) {          // recolor the model (e.g. to black)
+            o.material = o.material.clone();
+            o.material.color.set(CONFIG.modelColor);
+            o.material.roughness = 0.82;
+            o.material.metalness = 0.0;
+          }
+          const v = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()).length();
+          if (v > max) { max = v; target = o; }
         }
-        const v = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()).length();
-        if (v > max) { max = v; target = o; }
-      }
-    });
-  } else {
-    capGroup = makeProceduralCap(CONFIG.capColor);
-    target = capGroup.userData.decalTarget;
+      });
+    } else {
+      capGroup = makeProceduralCap(CONFIG.capColor);
+      target = capGroup.userData.decalTarget;
+    }
+
+    fitToView(capGroup);                 // center and scale to fit the camera
+    capGroup.position.y += capConfig.yOffset || 0;
+    capsRoot.add(capGroup);
+    capGroup.updateMatrixWorld(true);    // important: matrices ready BEFORE placing decals
+
+    const box = new THREE.Box3().setFromObject(target);
+    for (const logoCfg of capConfig.logos) {
+      const texture = await createLogoTexture(logoCfg);
+      placeDecal(target, box, logoCfg.placement, texture);
+    }
+  };
+
+  for (const capConfig of CAPS_CONFIG) {
+    await buildCapFromConfig(capConfig);
   }
 
-  scene.add(capGroup);
-  fitToView(capGroup);                 // center and scale to fit the camera
-  capGroup.updateMatrixWorld(true);    // important: matrices ready BEFORE placing decals
-  capRoot = capGroup;
+  capRoot = capsRoot;
   frameCapInView(capRoot);
-
-  const box = new THREE.Box3().setFromObject(target);
-  const logo = makeTextCardTexture('THIS IS THE', 'FIRST STEP');
-  const leftHeart = await makeImageCaptionTexture(
-    THREE,
-    'SOUL MATE',
-    '#ff0000',
-    'assets/heart.png',
-    512,
-    512,
-    CONFIG.iconTextSize,
-  );
-  const leftPlane = await makeImageCaptionTexture(
-    THREE,
-    'NEW HORIZONS',
-    '#78a2bf',
-    'assets/plane.png',
-    512,
-    512,
-    CONFIG.iconTextSize,
-  );
-  const rightBaby = await makeImageCaptionTexture(
-    THREE,
-    'CRAWL SPACE',
-    '#d79984',
-    'assets/baby.png',
-    512,
-    512,
-    CONFIG.iconTextSize,
-  );
-  const rightHouse = await makeImageCaptionTexture(
-    THREE,
-    'HOME STEADY',
-    '#a66843',
-    'assets/house.png',
-    512,
-    512,
-    CONFIG.iconTextSize,
-  );
-
-  const leftHeartCfg = { ...CONFIG.left, dir: [1, 0, 0.3], height: 0.46, size: 0.20 };
-  const leftPlaneCfg = { ...CONFIG.left, dir: [1, 0, -0.2], height: 0.46, size: 0.20 };
-  const rightBabyCfg = { ...CONFIG.right, dir: [-1, 0, 0.15], height: 0.46, size: 0.20 };
-  const rightHouseCfg = { ...CONFIG.right, dir: [-1, 0, 0.66], height: 0.46, size: 0.20 };
-
-  placeDecal(target, box, CONFIG.logo,  logo);
-  placeDecal(target, box, leftHeartCfg, leftHeart);
-  placeDecal(target, box, leftPlaneCfg, leftPlane);
-  placeDecal(target, box, rightBabyCfg, rightBaby);
-  placeDecal(target, box, rightHouseCfg, rightHouse);
 }
 
 // Fit the model: center it horizontally, sit it "on the floor" and scale to ~1.6 units
