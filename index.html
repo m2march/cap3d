@@ -78,9 +78,7 @@ const CONFIG = {
   iconTextSize: 48,              // caption font size used for icon decals
 };
 
-const CAPS_CONFIG = [
-  {
-    yOffset: 1.05,
+const big_logos = {
     logos: [
       {
         type: 'textCard',
@@ -117,9 +115,8 @@ const CAPS_CONFIG = [
         placement: { dir: [-1, 0, 0.66], height: 0.46, size: 0.20 },
       },
     ],
-  },
-  {
-    yOffset: -1.05,
+  }
+  const side_logos = {
     logos: [
       {
         type: 'textCard',
@@ -158,8 +155,59 @@ const CAPS_CONFIG = [
         placement: { dir: [1, 0, -0.3], height: 0.36, size: 0.10 },
       },
     ],
-  },
-];
+  }
+  const side_single_line = {
+    logos: [
+      {
+        type: 'textCard',
+        topText: 'THIS IS THE',
+        bottomText: '',
+        topColor: '#fffffe',
+        bottomColor: '#f86600',
+        placement: { dir: [-0.2, 0, -5.5], height: 0.54, size: 0.36 },
+      },
+      {
+        type: 'textCard',
+        topText: 'FIRST STEP',
+        bottomText: '',
+        topColor: '#f86600',
+        placement: { dir: [-0.2, 0, -0.5], height: 0.54, size: 0.36 },
+      },
+      {
+        type: 'imageCaption',
+        textBelow: '',
+        textColor: '#ff0000',
+        imageUrl: 'assets/heart.png',
+        placement: { dir: [1, 0, 0.3], height: 0.36, size: 0.10 },
+      },
+      {
+        type: 'imageCaption',
+        textBelow: '',
+        textColor: '#78a2bf',
+        imageUrl: 'assets/plane.png',
+        placement: { dir: [1, 0, 0.1], height: 0.36, size: 0.10 },
+      },
+      {
+        type: 'imageCaption',
+        textBelow: '',
+        textColor: '#d79984',
+        imageUrl: 'assets/baby.png',
+        placement: { dir: [1, 0, -0.1], height: 0.36, size: 0.10 },
+      },
+      {
+        type: 'imageCaption',
+        textBelow: '',
+        textColor: '#a66843',
+        imageUrl: 'assets/house.png',
+        placement: { dir: [1, 0, -0.3], height: 0.36, size: 0.10 },
+      },
+    ],
+  }
+
+const CAPS_CONFIG = [
+  Object.assign({yOffset: -1}, side_logos),
+  Object.assign({yOffset: 1}, side_single_line),
+]
 
 const container = document.getElementById('cap');
 
